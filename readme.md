@@ -1,3 +1,8 @@
+Данные взяты из статьи:
+
+https://vc.ru/dev/66942-sozdaem-svoy-vpn-server-poshagovaya-instrukciya
+
+
 Установка strongSwan
 
 Установим strongSwan:
