@@ -1,66 +1,100 @@
-Данные взяты из статьи:
+# Организация VPN на базе IKEv2
+
+Данный проект автоматизирует некоторые шаги по организации VPN на сервере Linux и связи с клиентами на iOS/macOS.
+
+Информация взята из статьи:
 
 https://vc.ru/dev/66942-sozdaem-svoy-vpn-server-poshagovaya-instrukciya
 
+В этой статье описан полностью ручной способ установки и настройки сервера и клиентов iOS/macOS. Далее же 
+излагается способ включающий некоторую автоматизацию процесса.
 
-Установка strongSwan
+### Установка и настройка сервера
 
-Установим strongSwan:
+#### 1. Установка strongSwan
 
-apt-get install strongswan
+`apt-get install strongswan`
+
 К детальной настройке strongSwan мы вернемся чуть позже, а пока создадим сертификаты, чтобы наши устройства смогли подключиться по VPN.
 
-Генерируем сертификаты доступа
+Будем использовать самоподписанные сертификаты, поскольку VPN-сервером планируем пользоваться только мы. Для того 
+чтобы создать сертификаты, потребуется пакет strongswan-pki. Установим его:
 
-Мы будем использовать самозаверенные сертификаты, поскольку VPN-сервером планируем пользоваться только мы. Для того чтобы создать сертификаты, нам потребуется пакет strongswan-pki. Установим его:
+`apt-get install strongswan-pki`
 
-apt-get install strongswan-pki
-Переходим к созданию сертификатов. В первую очередь нам нужно создать корневой сертификат, он же “CA” (Certificate Authority), который выпустит нам остальные сертификаты. Создадим его в файле ca.pem:
+#### 2. Установка vpn_ike2
 
-cd /etc/ipsec.d
-ipsec pki --gen --type rsa --size 4096 --outform pem > private/ca.pem
-ipsec pki --self --ca --lifetime 3650 --in private/ca.pem \
-> --type rsa --digest sha256 \
-> --dn "CN=YOUR_LIGHTSAIL_IP" \
-> --outform pem > cacerts/ca.pem
-Далее создадим сертификат для нашего VPN-сервера в файле debian.pem:
+Скачиваем скрипты этого проекта, например, в домашнюю директорию. Затем разрешаем скриптам питона исполняться.
 
-ipsec pki --gen --type rsa --size 4096 --outform pem > private/debian.pem
-ipsec pki --pub --in private/debian.pem --type rsa |
-> ipsec pki --issue --lifetime 3650 --digest sha256 \
-> --cacert cacerts/ca.pem --cakey private/ca.pem \
-> --dn "CN=YOUR_LIGHTSAIL_IP" \
-> --san YOUR_LIGHTSAIL_IP \
-> --flag serverAuth --outform pem > certs/debian.pem
-А теперь создадим сертификат для наших устройств в файле me.pem:
+```
+git clone --depth 1 https://github.com/chemandante/vpn_ikev2
+cd vpn_ikev2
+chmod +x *.py
+```
 
-ipsec pki --gen --type rsa --size 4096 --outform pem > private/me.pem
-ipsec pki --pub --in private/me.pem --type rsa |
-> ipsec pki --issue --lifetime 3650 --digest sha256 \
-> --cacert cacerts/ca.pem --cakey private/ca.pem \
-> --dn "CN=me" --san me \
-> --flag clientAuth \
-> --outform pem > certs/me.pem
-Для надежности удалим файл ca.pem, он нам больше не потребуется:
+#### 3. Создание ключей и сертификатов сервера
 
-rm /etc/ipsec.d/private/ca.pem
-Создание сертификатов завершено.
+В первую очередь нам нужно создать корневой ключ и сертификат, он же “CA” 
+(Certificate Authority), который выпустит нам остальные сертификаты. Он будет создан в файлах `ca.pem`: ключ в 
+`/etc/ipsec.d/private/`, сертификат в `/etc/ipsec.d/cacerts/`.
 
+Затем создаем ключ и сертификат VPN-сервера, 
+требуемый для аутентификации соединения. Назовем его `oscar`, и пусть он будет доступен по адресу `oscar.domain.com` 
 
-Настроим сам strongSwan
+Оба этих действия создает скрипт:
+```
+./gen_server_keys.py oscar oscar.domain.com
+```
+В этом примере созданы корневой сертификат и сертификат сервера `oscar` с доступом по адресу `oscar.domain.com`
 
-Очистим дефолтный конфиг strongSwan командой:
+Если все прошло ок, то имеем 4 файла:  
+`/etc/ipsec.d/cacerts/ca.pem` — сертификат CA (самоподписанный);  
+`/etc/ipsec.d/private/ca.pem` — закрытый ключ CA;  
+`/etc/ipsec.d/certs/oscar.pem` — сертификат сервера;  
+`/etc/ipsec.d/private/oscar.pem` — закрытый ключ сервера.
 
+#### 4. Создание ключей и сертификатов клиентов
+
+Перед созданием клиентских сертификатов, потребуется установить `zsh`:
+
+```
+apt-get install zsh
+```
+
+А теперь создадим сертификат для нашего устройства:
+
+```
+./gen_client_key.py my_iphone oscar oscar.domain.com
+```
+
+В этом примере создан ключ и сертификат устройства `my_iphone`. Помимо сертификата скрипт создает также и профиль 
+для iOS/macOS клиента для подсоединения к VPN `oscar` с адресом `oscar.domain.com`. Для этого, в общем-то и нужны 
+соответствующие параметры вызова скрипта. Подробнее о профиле в разделе о [настройке клиентов iOS/macOS](#Настройка-клиентов-iOS/macOS).
+
+Если все прошло ок, то добавляются 3 файла:  
+`/etc/ipsec.d/certs/my_iphone.pem` — сертификат клиентского устройства  
+`/etc/ipsec.d/private/my_iphone.pem` — закрытый ключ клиентского устройства  
+`my_iphone.mobileconfig` — профиль клиента VPN для установки на iOS/macOS
+
+#### 5. Настройка strongSwan
+
+Очистим дефолтный конфиг strongSwan командой
+
+```
 > /etc/ipsec.conf
-И создадим свой в текстовом редакторе nano:
+```
 
+Создадим свой в текстовом редакторе nano:
+
+```
 nano /etc/ipsec.conf
-Вставьте данный текст в него, заменив YOUR_LIGHTSAIL_IP на внешний IP-адрес машины в AWS Lightsail:
+```
+Вставьте данный текст в него, заменив YOUR_VPN_IP на внешний IP-адрес (или FQDN) сервера, а YOUR_VPN_CERT на имя 
+файла с сертификатом сервера (в нашем примере `oscar.domain.com` и `oscar.pem`, соответственно):
 
-include /var/lib/strongswan/ipsec.conf.inc
-
+```
 config setup
-        uniqueids=never
+        uniqueids=keep
         charondebug="ike 2, knl 2, cfg 2, net 2, esp 2, dmn 2,  mgr 2"
 
 conn %default
@@ -73,9 +107,9 @@ conn %default
         dpdaction=clear
         left=%any
         leftauth=pubkey
-        leftsourceip=YOUR_LIGHTSAIL_IP
-        leftid=YOUR_LIGHTSAIL_IP
-        leftcert=debian.pem
+        leftsourceip=YOUR_VPN_IP
+        leftid=YOUR_VPN_IP
+        leftcert=YOUR_VPN_CERT
         leftsendcert=always
         leftsubnet=0.0.0.0/0
         right=%any
@@ -85,33 +119,49 @@ conn %default
 
 conn ikev2-pubkey
         auto=add
+``` 
+       
 Внимание! strongSwan требователен к отступам в конфиге, поэтому удостоверьтесь, что параметры каждого раздела конфига отбиты через Tab, как это показано на примере, или хотя бы через один пробел, иначе strongSwan не запустится.
 
-Сохраним файл с помощью Ctrl+X и пойдем дальше.
+Добавим в файл `ipsec.secrets`, который является хранилищем ссылок на сертификаты и ключи аутентификации, указатель 
+на наш сертификат сервера (дан пример с файлом `oscar.pem`):
 
-Добавим в файл ipsec.secrets, который является хранилищем ссылок на сертификаты и ключи аутентификации, указатель на наш сертификат сервера:
-
+```
 nano /etc/ipsec.secrets
-include /var/lib/strongswan/ipsec.secrets.inc
+```
 
-: RSA debian.pem
-На этом настройка Strongswan завершена, можно рестартнуть службу:
+```
+: RSA oscar.pem
+```
+Пробелы исключительно важны! Двоеточие, пробел, "RSA", пробел, имя файла - только так и не иначе.
 
+На этом настройка Strongswan завершена, можно перезапустить службу:
+
+```
 ipsec restart
+```
+
 Если всё хорошо, то сервер запустится:
 
-...
-Starting strongSwan 5.5.1 IPsec [starter]...
+```
+Starting strongSwan 5.9.1 IPsec [starter]...
+```
+
 Если упадет в ошибку, то можно посмотреть, что именно произошло, почитав системный лог. Команда выведет 50 последних строк лога:
-
+```
 tail -n 50 > /var/log/syslog
-Настроим сетевые параметры ядра
+```
 
-Теперь нам необходимо внести некоторые изменения в файл /etc/sysctl.conf.
+#### 6. Настройка сетевых параметров ядра
 
+Теперь нам необходимо внести некоторые изменения в файл `/etc/sysctl.conf`.
+
+```
 nano /etc/sysctl.conf
-Через Ctrl+W найдем в файле следующие переменные и внесем в них изменения:
+```
+Найдем в файле следующие переменные и внесем в них изменения:
 
+```
 #Раскомментируем данный параметр, чтобы включить переадресацию пакетов
 net.ipv4.ip_forward = 1
 
@@ -121,71 +171,113 @@ net.ipv4.conf.all.accept_redirects = 0
 #Раскомментируем данный параметр, чтобы запретить отправку ICMP-редиректов
 net.ipv4.conf.all.send_redirects = 0
 
-...
-
 #В любом месте файла на новой строке добавим данный параметр, запретив поиск PMTU
 net.ipv4.ip_no_pmtu_disc = 1
+```
+
 Подгрузим новые значения:
 
+```
 sysctl -p
+```
+
 Настройка сетевых параметров ядра завершена.
 
+#### 7. Настройка iptables
 
+iptables — это утилита, которая управляет встроенным в Linux файрволом netfilter. Для того чтобы сохранять правила iptables в файле и подгружать их при каждом запуске системы, установим пакет iptables-persistent:
 
-Настроим iptables
-
-iptables — это утилита, которая управляет встроенным в Linux файрволом netfilter. Для того, чтобы сохранять правила iptables в файле и подгружать их при каждом запуске системы, установим пакет iptables-persistent:
-
+```
 apt-get install iptables-persistent
+```
+
 После установки нас спросят, сохранить ли текущие правила IPv4 и IPv6. Ответим «Нет», так как у нас новая система, и по сути нечего сохранять.
 
 Перейдем к формированию правил iptables. На всякий пожарный, очистим все цепочки:
 
+```
 iptables -P INPUT ACCEPT
 iptables -P FORWARD ACCEPT
 iptables -F
 iptables -Z
+```
+
 Разрешим соединения по SSH на 22 порту, чтобы не потерять доступ к машине:
 
+```
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+```
+
 Разрешим соединения на loopback-интерфейсе:
 
+```
 iptables -A INPUT -i lo -j ACCEPT
+```
+
 Теперь разрешим входящие IPSec-соединения на UDP-портах 500 и 4500:
 
+```
 iptables -A INPUT -p udp --dport  500 -j ACCEPT
 iptables -A INPUT -p udp --dport 4500 -j ACCEPT
+```
+
 Разрешим переадресацию ESP-трафика:
 
+```
 iptables -A FORWARD --match policy --pol ipsec --dir in  --proto esp -s 10.10.10.0/24 -j ACCEPT
 iptables -A FORWARD --match policy --pol ipsec --dir out --proto esp -d 10.10.10.0/24 -j ACCEPT
+```
+
 Настроим маскирование трафика, так как наш VPN-сервер, по сути, выступает как шлюз между Интернетом и VPN-клиентами:
 
+```
 iptables -t nat -A POSTROUTING -s 10.10.10.0/24 -o eth0 -m policy --pol ipsec --dir out -j ACCEPT
 iptables -t nat -A POSTROUTING -s 10.10.10.0/24 -o eth0 -j MASQUERADE
+```
+
+Обратите внимание на интерфейс `eth0` — в моем случае он был совсем другим. Узнать его можно с помощью команды `ip 
+address`
+
 Настроим максимальный размер сегмента пакетов:
 
+```
 iptables -t mangle -A FORWARD --match policy --pol ipsec --dir in -s 10.10.10.0/24 -o eth0 -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
+```
+
 Запретим все прочие соединения к серверу:
 
+```
 iptables -A INPUT -j DROP
 iptables -A FORWARD -j DROP
+```
+
 Сохраним правила, чтобы они загружались после каждой перезагрузки:
 
+```
 netfilter-persistent save
 netfilter-persistent reload
-Настройка iptables завершена.
+```
 
+Настройка iptables завершена.
 
 Перезагрузим машину:
 
+```
 reboot
-И посмотрим работают ли правила iptables:
+```
 
+#### 8. Проверка
+
+Проверяем, работают ли правила iptables:
+
+```
 sudo su
 iptables -S
-root@XX.XX.XX.XX:/home/admin# iptables -S
+```
+Должны получить:
+
+```
 -P INPUT ACCEPT
 -P FORWARD ACCEPT
 -P OUTPUT ACCEPT
@@ -198,41 +290,61 @@ root@XX.XX.XX.XX:/home/admin# iptables -S
 -A FORWARD -s 10.10.10.0/24 -m policy --dir in --pol ipsec --proto esp -j ACCEPT
 -A FORWARD -d 10.10.10.0/24 -m policy --dir out --pol ipsec --proto esp -j ACCEPT
 -A FORWARD -j DROP
-Да, всё работает.
+```
 
 Работает ли strongSwan:
 
+```
 ipsec statusall
-root@XX.XX.XX.XX:/home/admin# ipsec statusall
+```
+
+```
 Status of IKE charon daemon (strongSwan 5.5.1, Linux 4.9.0-8-amd64, x86_64):
   uptime: 71 seconds, since Jan 23 23:22:16 2019
 
 ...
-Да, всё работает.
+```
+Всё должно работать.
 
+#### 9. Уборка
 
-Создаем .mobileconfig для iPhone, iPad и Mac
+Во-первых, закрытые ключи клиентов на сервере не нужны - после создания профилей клиентских устройств (iOS/mscOS) 
+или сертификатов (Windows) эти ключи надо удалить. Они находятся в папке `/etc/ipsec.d/private`.
 
-Мы будем использовать один VPN-профайл .mobileconfig для всех наших устройств: iPhone, iPad и Mac. Конфиг, который мы сделаем, устроен таким образом, чтобы инициировать соединение “On Demand”. Это означает, что при попытке любой службы или приложения выйти в Интернет, VPN-соединение будет всегда устанавливаться принудительно и автоматически. Таким образом, удастся избежать ситуации, когда вы забыли установить VPN-соединение, например, после перезагрузки устройства, а трафик в итоге пошел через провайдера, что нам совсем не нужно.
+Во-вторых, если не планируется больше выпускать клиентские сертификаты, то можно удалить и закрытый корневой ключ 
+удостоверяющего центра (CA) (`/etc/ipsec.d/private/ca.pem`).
 
-Скачаем скрипт, который сгенерирует для нас данный конфиг:
+**Важно!** Не удалите закрытый ключ сервера из этой же папки (в нашем примере `oscar.pem`) — он необходим!
 
-wget https://gist.githubusercontent.com/borisovonline/955b7c583c049464c878bbe43329a521/raw/966e8a1b0a413f794280aba147b7cea0661f77a8/mobileconfig.sh
-Для того, чтобы скрипт отработал, нам потребуется пакет zsh, установим его:
+### Настройка клиентов iOS/macOS
 
-apt-get install zsh
-Отредактируем название сервера по вкусу, а также пропишем внешний IP-адрес машины Lightsail, который мы указывали при создании сертификатов:
+На этапе 4 при настройке сервера мы создали ключ и сертификат клиентского устройства. В числе прочего в нашем 
+примере был создан файл `my_iphone.mobileconfig`. Его следует отправить на ваше устройство любым способом, 
+телеграмом, дропбоксом или как-то иначе.
 
-nano mobileconfig.sh
-...
+Телеграм и дропбокс этот файл открывают как текстовый, так не пойдет - в этом случае файл необходимо экспортировать и 
+сохранить на самом устройстве. После этого найти его в стандартном приложении 
+"Files", ткнуть на него и он автоматически будет "скачан" как профиль настроек VPN. После этого надо перейти в 
+настройки и найти появившийся пункт "Downloaded profiles", зайти туда, и скачанный профиль установить. Останется 
+только включить VPN, чтобы все заработало.
 
-SERVER="AWS Frankfurt"
-FQDN="YOUR_LIGHTSAIL_IP"
+Настройка "Connect on demand" по-умолчанию отключена. Если она требуется, 
+то идем в Настройки -> Общие -> VPN и устройства, там находим профиль под именем нашего VPN-сервера и в нем уже 
+включаем Connect on demand.  
 
-...
-Запустим скрипт и на выходе получим готовый файл iphone.mobileconfig:
+### Настройка клиентов Windows
 
-chmod u+x mobileconfig.sh
-./mobileconfig.sh > iphone.mobileconfig
-Заберите этот файл с сервера, подключившись с помощью любого SFTP-клиента, например, Transmit или Cyberduck, и отправьте его на все ваши устройства через Airdrop. Подтвердите на устройствах установку конфигурации.
+Описание в процессе подготовки
 
+### Разные тонкости
+
+#### Подсоединение нескольких клиентов по одному сертификату
+
+Если есть желание разрешить подсоединение многих клиентов по одному сертификату (ну, мало ли), то в файле 
+`/etc/ipsec.conf` строку `uniqueids=keep` надо заменить на `uniqueids=never`
+
+### Благодарности
+
+Автору оригинальной статьи, [Oleg Borisov](https://vc.ru/u/68882-oleg-borisov), за проделанную работу и доступное 
+изложение.
+Автору [основного проекта](https://github.com/allright/vpn_ikev2), [https://github.com/allright], за shell-скрипты.
