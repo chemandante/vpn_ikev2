@@ -14,4 +14,3 @@ ipsec pki --pub --in "$CLI_PRIV_NAME" --type rsa | ipsec pki --issue --lifetime 
 --cacert "$CA_CERT_NAME" --cakey "$CA_PRIV_NAME" --dn "CN=$NAME" --san "$NAME" --flag clientAuth \
 --outform pem > "$CLI_CERT_NAME"
 
-./mobileconfig.sh "$NAME" "$SERVER_NAME" "$SERVER_ADDR" > "$NAME".mobileconfig
