@@ -11,11 +11,11 @@ https://vc.ru/dev/66942-sozdaem-svoy-vpn-server-poshagovaya-instrukciya
 
 Данный проект ставит целью автоматизировать часть работ.
 
-[Установка и настройка сервера](https://chemandante.github.io/vpn_ikev2/docs/server.html)
+[Установка и настройка сервера](https://chemandante.github.io/vpn_ikev2/server.html)
 
-[Настройка клиента iOS/macOS](https://chemandante.github.io/vpn_ikev2/docs/ios.html)
+[Настройка клиента iOS/macOS](https://chemandante.github.io/vpn_ikev2/ios.html)
 
-[Настройка клиента Windows](https://chemandante.github.io/vpn_ikev2/docs/win.html)
+[Настройка клиента Windows](https://chemandante.github.io/vpn_ikev2/win.html)
 
 ### Благодарности
 
