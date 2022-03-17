@@ -1,37 +1,25 @@
-## Welcome to GitHub Pages
+## Организация VPN на базе IKEv2
 
-You can use the [editor on GitHub](https://github.com/chemandante/vpn_ikev2/edit/master/docs/index.md) to maintain and preview the content for your website in Markdown files.
+Данный проект автоматизирует некоторые шаги по организации VPN на сервере Linux и связи с клиентами на 
+iOS/macOS/Windows.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+Информация взята из статьи:
 
-### Markdown
+https://vc.ru/dev/66942-sozdaem-svoy-vpn-server-poshagovaya-instrukciya
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+В этой статье описан полностью ручной способ установки и настройки сервера и клиентов iOS/macOS. 
 
-```markdown
-Syntax highlighted code block
+Данный проект ставит целью автоматизировать часть работ.
 
-# Header 1
-## Header 2
-### Header 3
+[Установка и настройка сервера](server.html)
 
-- Bulleted
-- List
+[Настройка клиента iOS/macOS](ios.html)
 
-1. Numbered
-2. List
+[Настройка клиента Windows](win.html)
 
-**Bold** and _Italic_ and `Code` text
+### Благодарности
 
-[Link](url) and ![Image](src)
-```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/chemandante/vpn_ikev2/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+Автору [оригинальной статьи](https://vc.ru/dev/66942-sozdaem-svoy-vpn-server-poshagovaya-instrukciya) ([Oleg Borisov](https://vc.ru/u/68882-oleg-borisov)) за проделанную работу и доступное 
+изложение.  
+Автору [основного проекта](https://github.com/allright/vpn_ikev2) ([allright](https://github.com/allright)) за 
+shell-скрипты.
