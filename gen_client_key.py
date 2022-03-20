@@ -13,14 +13,18 @@ if argc == 5:
     clientName = argv[2]
     serverName = argv[3]
     serverAddr = argv[4]
-else:
-    print("Usage:\n")
-    print("./gen_client_keys.py <commands> <client name> <server name> <server address>\n")
-    print("Commands:")
-    print("    a - generate .mobileconfig for Apple devices")
-    print("    w - generate .pfx certificate for Windows")
-    print("    k - keep private key")
 
+    wrongUsage = command[0] != "-"
+else:
+    wrongUsage = True
+
+if wrongUsage:
+    print("Usage:\n")
+    print("./gen_client_keys.py -[awk] <client name> <server name> <server address>\n")
+    print("Commands:")
+    print("    -a - generate .mobileconfig for Apple devices")
+    print("    -w - generate .pfx certificate for Windows")
+    print("    -k - keep private key")
     exit(1)
 
 if " " in clientName + serverName + serverAddr:
