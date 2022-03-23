@@ -2,18 +2,18 @@
 
 import os
 import subprocess
+import sys
 from sys import argv
+
+from config_json import GetJSONConfig
 
 CERTS_DIR = "/etc/ipsec.d/certs/"
 PRIVATE_DIR = "/etc/ipsec.d/private/"
 
 argc = len(argv)
-if argc == 5:
+if argc == 3:
     command = argv[1]
     clientName = argv[2]
-    serverName = argv[3]
-    serverAddr = argv[4]
-
     wrongUsage = command[0] != "-"
 else:
     wrongUsage = True
@@ -25,20 +25,24 @@ if wrongUsage:
     print("    -a - generate .mobileconfig for Apple devices")
     print("    -w - generate .pfx certificate for Windows")
     print("    -k - keep private key")
-    exit(1)
+    sys.exit(1)
 
-if " " in clientName + serverName + serverAddr:
+if " " in clientName:
     print("No spaces allowed in client and server names, as well as in the address")
-    exit(1)
+    sys.exit(1)
+
+conf = GetJSONConfig("config.json")
+serverName = conf["serverName"]
+serverAddr = conf["serverAddr"]
 
 privateKeyFileName = PRIVATE_DIR + clientName + ".pem"
 
-res = subprocess.run(["sh", "genclientcert.sh", clientName, serverName, serverAddr])
+res = subprocess.run(["sh", "genclientcert.sh", clientName, serverName, serverAddr], check=True)
 
 if "a" in command:
     mobileConfig = clientName + ".mobileconfig"
-    with open(mobileConfig, "w") as f:
-        res = subprocess.run(["zsh", "mobileconfig.sh", clientName, serverName, serverAddr], stdout=f)
+    with open(mobileConfig, "w", encoding="ascii") as f:
+        res = subprocess.run(["zsh", "mobileconfig.sh", clientName, serverName, serverAddr], stdout=f, check=True)
     print(f"{mobileConfig} was generated successfully")
 
 if "w" in command:
@@ -47,8 +51,9 @@ if "w" in command:
     res = subprocess.run(["openssl", "pkcs12", "-export",
                           "-in", CERTS_DIR + clientName + ".pem",
                           "-inkey", privateKeyFileName,
-                          "-out", pfxName])
+                          "-out", pfxName], check=True)
     print(f"{pfxName} was generated successfully")
+    # Set-VpnConnection -Name Easy -MachineCertificateIssuerFilter ".....\Overmind.cer"
 
 if "k" not in command:
     os.remove(privateKeyFileName)
