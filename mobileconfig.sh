@@ -1,8 +1,11 @@
 #!/bin/zsh
 
-CLIENT=$1 #"me"
-SERVER=$2 #"AWS London"
-FQDN=$3 #"YOUR_LIGHTSAIL_IP"
+CLIENT=$1 # Client ID (name), ex. 'my_iphone'
+SERVER=$2 # Server ID (name), ex. 'oscar'
+FQDN=$3   # Server FQDN, ex. 'oscar.domain.com'
+PROFILE_DISPLAY_NAME=$4  # ex. 'My_iphone IKEv2'
+ISSUER_FQDN=$5 # Certificate issuer FQDN
+ORGANIZATION_NAME=$6 # Organization name shown as a description in the profile list
 CA="ca"
 
 # WiFi SSIDs that do not require automatic connection to VPN on network change
@@ -17,7 +20,11 @@ cat << EOF
 <plist version="1.0">
 <dict>
     <key>PayloadDisplayName</key>
-    <string>${SERVER} VPN</string>
+    <string>${PROFILE_DISPLAY_NAME}</string>
+    <key>PayloadOrganization</key>
+    <string>${ORGANIZATION_NAME}</string>
+    <key>PayloadDescription</key>
+    <string>VPN-IKEv2 configuration</string>
     <key>PayloadIdentifier</key>
     <string>${(j:.:)${(Oas:.:)FQDN}}</string>
     <key>PayloadUUID</key>
@@ -30,11 +37,11 @@ cat << EOF
     <array>
         <dict>
             <key>PayloadDisplayName</key>
-            <string>${SERVER} VPN</string>
+            <string>${PROFILE_DISPLAY_NAME}</string>
             <key>PayloadDescription</key>
             <string>Configure VPN</string>
             <key>UserDefinedName</key>
-            <string>${SERVER}</string>
+            <string>${PROFILE_DISPLAY_NAME}</string>
             <key>VPNType</key>
             <string>IKEv2</string>
             <key>IKEv2</key>
@@ -52,7 +59,7 @@ cat << EOF
                 <key>CertificateType</key>
                 <string>RSA</string>
                 <key>ServerCertificateIssuerCommonName</key>
-                <string>${FQDN}</string>
+                <string>${ISSUER_FQDN}</string>
                 <key>EnablePFS</key>
                 <integer>1</integer>
                 <key>IKESecurityAssociationParameters</key>
@@ -112,7 +119,7 @@ cat << EOF
             <key>PayloadDisplayName</key>
             <string>${CLIENT}.p12</string>
             <key>PayloadDescription</key>
-            <string>Add PKCS#12 certificate</string>
+            <string>Device PKCS#12 certificate</string>
             <key>PayloadCertificateFileName</key>
             <string>${CLIENT}.p12</string>
             <key>Password</key>
@@ -134,7 +141,7 @@ $( openssl pkcs12 -export -inkey /etc/ipsec.d/private/${CLIENT}.pem -in /etc/ips
             <key>PayloadDisplayName</key>
             <string>${SERVER} CA</string>
             <key>PayloadDescription</key>
-            <string>Add CA root certificate</string>
+            <string>CA root certificate</string>
             <key>PayloadCertificateFileName</key>
             <string>ca.pem</string>
             <key>PayloadContent</key>

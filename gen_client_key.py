@@ -1,14 +1,32 @@
 #!/usr/bin/python3
 
 import os
+import re
 import subprocess
 import sys
 from sys import argv
 
 from config_json import GetJSONConfig
 
+CA_CERT_NAME = "/etc/ipsec.d/cacerts/ca.pem"
 CERTS_DIR = "/etc/ipsec.d/certs/"
 PRIVATE_DIR = "/etc/ipsec.d/private/"
+
+
+def GetCASubjectCN():
+    """
+    Extracting issuer common name from CA certificate
+    :return: issuer common name without "CN=" prefix
+    """
+    output = subprocess.check_output(f"ipsec pki --print --in {CA_CERT_NAME}", shell=True)
+    output = output.decode(encoding="ascii")
+
+    m = re.search(r"subject:\s+\"CN=([\w.]+)\"", output)
+    if m.lastindex == 1:
+        return m.group(1)
+
+    return ""
+
 
 argc = len(argv)
 if argc == 3:
@@ -42,9 +60,15 @@ res = subprocess.run(["sh", "genclientcert.sh", clientName, serverName, serverAd
 if "a" in command:
     if not os.path.isdir("apple"):
         os.mkdir("apple")
+
     mobileConfig = "apple/" + clientName + ".mobileconfig"
+    issuerName = GetCASubjectCN()
+
     with open(mobileConfig, "w", encoding="ascii") as f:
-        res = subprocess.run(["zsh", "mobileconfig.sh", clientName, serverName, serverAddr], stdout=f, check=True)
+        profileDispName = serverName.capitalize() + " IKEv2"
+        res = subprocess.run(["zsh", "mobileconfig.sh", clientName, serverName, serverAddr, profileDispName,
+                              issuerName if issuerName != "" else serverName, profileDispName + " server"],
+                             stdout=f, check=True)
     print(f"'{mobileConfig}' was generated successfully")
 
 if "w" in command:

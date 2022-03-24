@@ -11,7 +11,7 @@ def GetJSONConfig(filename: str):
     :param filename:
     :return: Dict of parameters
     """
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="ascii") as f:
         conf = json.load(f)
         wrongConfig = False
 
