@@ -1,0 +1,7 @@
+# Adding VPN connection
+Add-VpnConnection -Name "VPN_CONN_NAME" -ServerAddress SERVER_ADDR -TunnelType Ikev2 `
+    -AuthenticationMethod MachineCertificate
+
+# Setting IPSec configuration parameters
+Set-VpnConnectionIPsecConfiguration -Name "VPN_CONN_NAME" -DHGroup Group14 -AuthenticationTransformConstants GCMAES128 `
+    -CipherTransformConstants GCMAES128 -EncryptionMethod GCMAES128 -IntegrityCheckMethod SHA256 -PfsGroup None

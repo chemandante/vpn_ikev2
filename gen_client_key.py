@@ -40,21 +40,37 @@ privateKeyFileName = PRIVATE_DIR + clientName + ".pem"
 res = subprocess.run(["sh", "genclientcert.sh", clientName, serverName, serverAddr], check=True)
 
 if "a" in command:
-    mobileConfig = clientName + ".mobileconfig"
+    if not os.path.isdir("apple"):
+        os.mkdir("apple")
+    mobileConfig = "apple/" + clientName + ".mobileconfig"
     with open(mobileConfig, "w", encoding="ascii") as f:
         res = subprocess.run(["zsh", "mobileconfig.sh", clientName, serverName, serverAddr], stdout=f, check=True)
-    print(f"{mobileConfig} was generated successfully")
+    print(f"'{mobileConfig}' was generated successfully")
 
 if "w" in command:
-    pfxName = clientName + ".pfx"
+    if not os.path.isdir("win"):
+        os.mkdir("win")
+    pfxName = "win/" + clientName + ".pfx"
     print("\nGenerating PFX certificate for Windows. Prepare to enter protection pasword.")
     res = subprocess.run(["openssl", "pkcs12", "-export",
                           "-in", CERTS_DIR + clientName + ".pem",
                           "-inkey", privateKeyFileName,
                           "-out", pfxName], check=True)
-    print(f"{pfxName} was generated successfully")
-    # Set-VpnConnection -Name Easy -MachineCertificateIssuerFilter ".....\Overmind.cer"
+
+    psScriptName = "win/" + clientName + ".ps1"
+
+    with open("template/powershell.template", "r", encoding="ascii") as f:
+        vpnConnName = conf["serverName"].capitalize() + " IKEv2"
+
+        s = f.read()
+        s = s.replace("VPN_CONN_NAME", vpnConnName)
+        s = s.replace("SERVER_ADDR", conf["serverAddr"])
+
+        with open(psScriptName, "w", encoding="ascii") as fw:
+            fw.write(s)
+
+    print(f"'{pfxName}' and '{psScriptName}' generated successfully")
 
 if "k" not in command:
     os.remove(privateKeyFileName)
-    print(f"{privateKeyFileName} was removed")
+    print(f"Private key in '{privateKeyFileName}' removed")
