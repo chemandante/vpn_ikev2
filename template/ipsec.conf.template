@@ -1,10 +1,10 @@
 config setup
         uniqueids=keep
-        charondebug="ike 2, knl 2, cfg 2, net 2, esp 2, dmn 2,  mgr 2"
+        charondebug="ike 1, knl 1, cfg 1, net 1, esp 1, dmn 1,  mgr 1"
 
 conn %default
         keyexchange=ikev2
-        ike=aes128gcm16-sha2_256-prfsha256-ecp256!
+        ike=aes128gcm16-sha2_256-prfsha256-ecp256-mod2048!
         esp=aes128gcm16-sha2_256-ecp256!
         fragmentation=yes
         rekey=no

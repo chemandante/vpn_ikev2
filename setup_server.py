@@ -81,7 +81,7 @@ if regenerateServer:
 #
 ans = input("\nWould you like to make 'ipsec.conf' and 'ipsec.secrets'? [Y/n] ")
 if ans == "" or ans.capitalize() == "Y":
-    with open("template/ipsec.conf", "r", encoding="ascii") as f:
+    with open("template/ipsec.conf.template", "r", encoding="ascii") as f:
         vpnCertName = conf["serverName"] + ".pem"
 
         s = f.read()
