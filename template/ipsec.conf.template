@@ -4,7 +4,7 @@ config setup
 
 conn %default
         keyexchange=ikev2
-        ike=aes128gcm16-sha2_256-prfsha256-ecp256-mod2048!
+        ike=aes128gcm16-sha2_256-prfsha256-ecp256-modp2048!
         esp=aes128gcm16-sha2_256-ecp256!
         fragmentation=yes
         rekey=no
