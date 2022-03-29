@@ -5,7 +5,7 @@ iOS/macOS/Windows.
 
 Информация взята из статьи:
 
-[https://vc.ru/dev/66942-sozdaem-svoy-vpn-server-poshagovaya-instrukciya]()
+<https://vc.ru/dev/66942-sozdaem-svoy-vpn-server-poshagovaya-instrukciya>
 
 В этой статье описан полностью ручной способ установки и настройки сервера и клиентов iOS/macOS. 
 

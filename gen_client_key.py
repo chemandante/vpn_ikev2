@@ -38,7 +38,7 @@ else:
 
 if wrongUsage:
     print("Usage:\n")
-    print("./gen_client_keys.py -[awk] <client name> <server name> <server address>\n")
+    print("./gen_client_keys.py -[awk] <client name>\n")
     print("Commands:")
     print("    -a - generate .mobileconfig for Apple devices")
     print("    -w - generate .pfx certificate for Windows")
@@ -46,7 +46,7 @@ if wrongUsage:
     sys.exit(1)
 
 if " " in clientName:
-    print("No spaces allowed in client and server names, as well as in the address")
+    print("No spaces allowed in client name")
     sys.exit(1)
 
 conf = GetJSONConfig("config.json")
@@ -57,6 +57,7 @@ privateKeyFileName = PRIVATE_DIR + clientName + ".pem"
 
 res = subprocess.run(["sh", "genclientcert.sh", clientName, serverName, serverAddr], check=True)
 
+# Generating certs for Apple devices
 if "a" in command:
     if not os.path.isdir("apple"):
         os.mkdir("apple")
@@ -71,6 +72,7 @@ if "a" in command:
                              stdout=f, check=True)
     print(f"'{mobileConfig}' was generated successfully")
 
+# Generating certs for Windows devices
 if "w" in command:
     if not os.path.isdir("win"):
         os.mkdir("win")
