@@ -42,7 +42,7 @@ if wrongUsage:
     print("Commands:")
     print("    -a - generate .mobileconfig for Apple devices")
     print("    -w - generate .pfx certificate for Windows")
-    print("    -k - keep private key")
+    print("    -k - keep pem-certificate and private key")
     sys.exit(1)
 
 if " " in clientName:
@@ -53,6 +53,7 @@ conf = GetJSONConfig("config.json")
 serverName = conf["serverName"]
 serverAddr = conf["serverAddr"]
 
+certKeyFileName = CERTS_DIR + clientName + ".pem"
 privateKeyFileName = PRIVATE_DIR + clientName + ".pem"
 
 res = subprocess.run(["sh", "genclientcert.sh", clientName, serverName, serverAddr], check=True)
@@ -98,5 +99,6 @@ if "w" in command:
     print(f"'{pfxName}' and '{psScriptName}' generated successfully")
 
 if "k" not in command:
+    os.remove(certKeyFileName)
     os.remove(privateKeyFileName)
-    print(f"Private key in '{privateKeyFileName}' removed")
+    print("Certificate and private key removed")

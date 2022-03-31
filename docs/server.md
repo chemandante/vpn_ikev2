@@ -18,7 +18,12 @@ apt update
 apt upgrade
 ```
 
-### 2. Установка strongSwan и дополнительных компонентов
+### 2. Установка strongSwan
+
+В большинстве случаев будет достаточно стандартной установки с помощью менеджера пакетов, например, `apt`. Однако, 
+если понадобится установка дополнительных плагинов strongSwan, придется устанавливать и собирать strongSwan вручную. 
+На этот случай подготовлена [отдельная инструкция](server_alt.html), после выполнения которой можно вернуться к 
+[установке дополнительных компонентов](#3-установка-дополнительных-компонентов).
 
 Для установки используем команду:
 
@@ -32,6 +37,8 @@ apt install strongswan
 ```
 apt install strongswan-pki
 ```
+
+### 3. Установка дополнительных компонентов
 
 iptables — это утилита, которая управляет встроенным в Linux файрволом netfilter. Для того чтобы сохранять правила
 iptables в файле и подгружать их при каждом запуске системы, установим пакет iptables-persistent:
@@ -48,7 +55,7 @@ apt install iptables-persistent
 apt install zsh
 ```
 
-### 3. Установка vpn_ike2
+### 4. Установка vpn_ike2
 
 Скачиваем скрипты этого проекта, например, в домашнюю директорию.
 
@@ -71,7 +78,7 @@ chmod +x *.py
 chmod +x *.sh
 ```
 
-### 4. Настройка сервера скриптом
+### 5. Настройка сервера скриптом
 
 Предварительно настроим конфигурацию будущего сервера, которая хранится в `config.json`, например, с помощью nano:
 
@@ -150,7 +157,7 @@ tail -n 50 > /var/log/syslog
 
 На этом работа скрипта закончена, но не закончена настройка сервера.
 
-### 5. Настройка сетевых параметров ядра
+### 6. Настройка сетевых параметров ядра
 
 Теперь нам необходимо внести некоторые изменения в файл `/etc/sysctl.conf`.
 
@@ -181,7 +188,7 @@ sysctl -p
 
 Настройка сетевых параметров ядра завершена.
 
-### 6. Настройка iptables
+### 7. Настройка iptables
 
 Перейдем к формированию правил iptables. На всякий пожарный, очистим все цепочки:
 
@@ -215,14 +222,19 @@ iptables -A INPUT -p udp --dport 4500 -j ACCEPT
 Разрешим переадресацию ESP-трафика:
 
 ```
-iptables -A FORWARD --match policy --pol ipsec --dir in  --proto esp -s 10.10.10.0/24 -j ACCEPT
-iptables -A FORWARD --match policy --pol ipsec --dir out --proto esp -d 10.10.10.0/24 -j ACCEPT
+iptables -A FORWARD --match policy --pol ipsec --dir in  --proto esp 
+    -s 10.10.10.0/24 -j ACCEPT
+
+iptables -A FORWARD --match policy --pol ipsec --dir out --proto esp \
+    -d 10.10.10.0/24 -j ACCEPT
 ```
 
 Настроим маскирование трафика, так как наш VPN-сервер, по сути, выступает как шлюз между Интернетом и VPN-клиентами:
 
 ```
-iptables -t nat -A POSTROUTING -s 10.10.10.0/24 -o eth0 -m policy --pol ipsec --dir out -j ACCEPT
+iptables -t nat -A POSTROUTING -s 10.10.10.0/24 -o eth0 -m policy --pol ipsec \
+    --dir out -j ACCEPT
+
 iptables -t nat -A POSTROUTING -s 10.10.10.0/24 -o eth0 -j MASQUERADE
 ```
 
@@ -232,7 +244,9 @@ address`
 Настроим максимальный размер сегмента пакетов:
 
 ```
-iptables -t mangle -A FORWARD --match policy --pol ipsec --dir in -s 10.10.10.0/24 -o eth0 -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
+iptables -t mangle -A FORWARD --match policy --pol ipsec --dir in \
+    -s 10.10.10.0/24 -o eth0 -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss \
+    --mss 1361:1536 -j TCPMSS --set-mss 1360
 ```
 
 Запретим все прочие соединения к серверу:
@@ -257,7 +271,7 @@ netfilter-persistent reload
 reboot
 ```
 
-### 7. Проверка
+### 8. Проверка
 
 Проверяем, работают ли правила iptables:
 
@@ -296,7 +310,7 @@ Status of IKE charon daemon (strongSwan 5.5.1, Linux 4.9.0-8-amd64, x86_64):
 ```
 Всё должно работать.
 
-### 8. Уборка
+### 9. Уборка
 
 Во-первых, закрытые ключи клиентов на сервере не нужны - после создания профилей клиентских устройств (iOS/mscOS) 
 или сертификатов (Windows) эти ключи надо удалить. Они находятся в папке `/etc/ipsec.d/private`. По-умолчанию, 
@@ -307,13 +321,13 @@ Status of IKE charon daemon (strongSwan 5.5.1, Linux 4.9.0-8-amd64, x86_64):
 
 **Важно!** Не удалите закрытый ключ сервера из этой же папки (в нашем примере `oscar.pem`) — он необходим!
 
-### 9. Создание ключей и сертификатов клиентов
+### 10. Создание ключей и сертификатов клиентов
 
 Процесс создания сертификата и профиля устройства тут: [Настройка клиента iOS/macOS](ios.html)
 
 Процесс создания сертификата и скрипта настройки тут: [Настройка клиента Windows](win.html)
 
-### 10. Разные тонкости
+### 11. Разные тонкости
 
 #### Подсоединение нескольких клиентов по одному сертификату
 
