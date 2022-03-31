@@ -56,4 +56,18 @@ file = /etc/ipsec.d/coupled.certs
 max = 4
 ```
 
+### 3. Проверка запуска strongSwan
+
+Разрешаем сервис, обеспечивающий запуск strongSwan'а:
+
+```
+systemctl ebable strongswan-starter
+```
+
+Перезапускаем сервер командой `reboot` и проверяем результат командой:
+
+```
+ipsec statusall
+```
+
 На этом установка strongswan'а завершена, можно переходить [к следующей фазе.](server.html#3-установка-дополнительных-компонентов)
