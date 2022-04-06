@@ -7,6 +7,7 @@ import sys
 from sys import argv
 
 from config_json import GetJSONConfig
+from make_mobileconfig import MakeMobileconfig
 
 CA_CERT_NAME = "/etc/ipsec.d/cacerts/ca.pem"
 CERTS_DIR = "/etc/ipsec.d/certs/"
@@ -66,11 +67,8 @@ if "a" in command:
     mobileConfig = "apple/" + clientName + ".mobileconfig"
     issuerName = GetCASubjectCN()
 
-    with open(mobileConfig, "w", encoding="ascii") as f:
-        profileDispName = serverName.capitalize() + " IKEv2"
-        res = subprocess.run(["zsh", "mobileconfig.sh", clientName, serverName, serverAddr, profileDispName,
-                              issuerName if issuerName != "" else serverName, profileDispName + " server"],
-                             stdout=f, check=True)
+    MakeMobileconfig(clientName, issuerName if issuerName != "" else serverName, conf)
+
     print(f"'{mobileConfig}' was generated successfully")
 
 # Generating certs for Windows devices
