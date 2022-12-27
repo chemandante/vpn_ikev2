@@ -1,0 +1,28 @@
+#bin/bash
+
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -F
+iptables -Z
+
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+
+iptables -A INPUT -i lo -j ACCEPT
+
+iptables -A INPUT -p udp --dport  500 -j ACCEPT
+iptables -A INPUT -p udp --dport 4500 -j ACCEPT
+
+iptables -A FORWARD --match policy --pol ipsec --dir in  --proto esp -s {VPN_SUBNET} -j ACCEPT
+iptables -A FORWARD --match policy --pol ipsec --dir out --proto esp -d {VPN_SUBNET} -j ACCEPT
+
+iptables -t nat -A POSTROUTING -s {VPN_SUBNET} -o {ETH_INTERFACE} -m policy --pol ipsec --dir out -j ACCEPT
+iptables -t nat -A POSTROUTING -s {VPN_SUBNET} -o {ETH_INTERFACE} -j MASQUERADE
+
+iptables -t mangle -A FORWARD --match policy --pol ipsec --dir in -s {VPN_SUBNET} -o {ETH_INTERFACE} -p tcp -m tcp --tcp-flags SYN,RST SYN -m tcpmss --mss 1361:1536 -j TCPMSS --set-mss 1360
+
+iptables -A INPUT -j DROP
+iptables -A FORWARD -j DROP
+
+netfilter-persistent save
+netfilter-persistent reload
