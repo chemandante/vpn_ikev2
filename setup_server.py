@@ -3,7 +3,7 @@
 import os
 import subprocess
 
-from config_json import GetJSONConfig
+from py.config_json import GetJSONConfig
 
 IPSEC_KEYS_DIR = "/etc/ipsec.d/"
 CA_CERT_FILENAME = IPSEC_KEYS_DIR + "cacerts/ca.pem"

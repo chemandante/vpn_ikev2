@@ -6,8 +6,8 @@ import subprocess
 import sys
 from sys import argv
 
-from config_json import GetJSONConfig
-from make_mobileconfig import MakeMobileconfig
+from py.config_json import GetJSONConfig
+from py.make_mobileconfig import MakeMobileconfig
 
 CA_CERT_NAME = "/etc/ipsec.d/cacerts/ca.pem"
 CERTS_DIR = "/etc/ipsec.d/certs/"
