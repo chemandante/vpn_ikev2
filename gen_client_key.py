@@ -76,9 +76,9 @@ if "w" in command:
     if not os.path.isdir("win"):
         os.mkdir("win")
     pfxName = "win/" + clientName + ".pfx"
-    print("\nGenerating PFX certificate for Windows. Prepare to enter protection pasword.")
+    print("\nGenerating PFX certificate for Windows. Prepare to enter protection password.")
     res = subprocess.run(["openssl", "pkcs12", "-export",
-                          "-in", CERTS_DIR + clientName + ".pem",
+                          "-in", certKeyFileName,
                           "-inkey", privateKeyFileName,
                           "-out", pfxName], check=True)
 
