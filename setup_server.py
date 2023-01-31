@@ -2,8 +2,10 @@
 
 import os
 import subprocess
+import sys
 
-from config_json import GetJSONConfig
+from py.eth_interfaces import SelectInterface
+from py.config_json import GetJSONConfig
 
 IPSEC_KEYS_DIR = "/etc/ipsec.d/"
 CA_CERT_FILENAME = IPSEC_KEYS_DIR + "cacerts/ca.pem"
@@ -66,7 +68,7 @@ if regenerateCA:
 regenerateServer = True
 if not regenerateCA:
     if os.path.isfile(IPSEC_KEYS_DIR + "private/" + conf["serverName"] + ".pem") and \
-            os.path.isfile(IPSEC_KEYS_DIR + "private/" + conf["serverName"] + ".pem"):
+            os.path.isfile(IPSEC_KEYS_DIR + "certs/" + conf["serverName"] + ".pem"):
 
         ans = input(f"Server private key for '{conf['serverName']}' already exists. "
                     "Would you like to regenerate key? [y/N] ")
@@ -98,3 +100,28 @@ if ans == "" or ans.capitalize() == "Y":
         print("Done")
 
     subprocess.run(["ipsec", "restart"], check=True)
+
+#
+# Configuring iptable
+#
+ans = input("\nWould you like to configure iptables? [Y/n] ")
+with open("template/confiptables.sh.template", "r", encoding="ascii") as f:
+
+    ethInterfaceName = SelectInterface()
+    if not ethInterfaceName:
+        sys.exit(-1)
+
+    s = f.read()
+    s = s.replace("{VPN_SUBNET}", conf["ipSubnet"])
+    s = s.replace("{ETH_INTERFACE}", ethInterfaceName)
+
+    fName = "confiptables.sh"
+    with open(fName, "w", encoding="ascii") as fw:
+        fw.write(s)
+
+    if ans == "" or ans.capitalize() == "Y":
+        subprocess.run(["bash", fName], check=True)
+
+        print(f"Script '{fName}' was ran successfully, iptables was configured")
+    else:
+        print(f"Script '{fName}' was prepared. Check it and run")
