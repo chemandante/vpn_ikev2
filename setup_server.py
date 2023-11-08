@@ -4,8 +4,9 @@ import os
 import subprocess
 import sys
 
-from py.eth_interfaces import SelectInterface
 from py.config_json import GetJSONConfig
+from py.eth_interfaces import SelectInterface
+from py.get_ssh_port import GetSSHPort
 
 IPSEC_KEYS_DIR = "/etc/ipsec.d/"
 CA_CERT_FILENAME = IPSEC_KEYS_DIR + "cacerts/ca.pem"
@@ -104,6 +105,11 @@ if ans == "" or ans.capitalize() == "Y":
 #
 # Configuring iptable
 #
+ssh_port = GetSSHPort()
+input(f"\nEnter port used by SSH (or press Enter to use detected value [{ssh_port}]): ")
+if ans != "":
+    ssh_port = int(ans)
+
 ans = input("\nWould you like to configure iptables? [Y/n] ")
 with open("template/confiptables.sh.template", "r", encoding="ascii") as f:
 
@@ -114,6 +120,7 @@ with open("template/confiptables.sh.template", "r", encoding="ascii") as f:
     s = f.read()
     s = s.replace("{VPN_SUBNET}", conf["ipSubnet"])
     s = s.replace("{ETH_INTERFACE}", ethInterfaceName)
+    s = s.replace("{SSH_PORT}", str(ssh_port))
 
     fName = "confiptables.sh"
     with open(fName, "w", encoding="ascii") as fw:

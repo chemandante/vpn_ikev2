@@ -98,7 +98,7 @@ nano config.json
 
 Запускаем скрипт настройки сервера:
 ```
-./setup.server.py
+./setup_server.py
 ```
 
 В первую очередь будут созданы корневой ключ и сертификат, он же “CA” (Certificate Authority), который выпустит нам 
