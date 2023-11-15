@@ -106,7 +106,7 @@ if ans == "" or ans.capitalize() == "Y":
 # Configuring iptable
 #
 ssh_port = GetSSHPort()
-input(f"\nEnter port used by SSH (or press Enter to use detected value [{ssh_port}]): ")
+ans = input(f"\nEnter port used by SSH (or press Enter to use detected value [{ssh_port}]): ")
 if ans != "":
     ssh_port = int(ans)
 
