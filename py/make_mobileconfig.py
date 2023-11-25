@@ -3,7 +3,7 @@ import subprocess
 import uuid
 
 
-def MakeMobileconfig(clientName, issuerName, config: dict):
+def MakeMobileconfig(outFileName, clientName, issuerName, config: dict):
     serverAddr = config["serverAddr"]
     serverName = config["serverName"].capitalize()
 
@@ -45,5 +45,5 @@ def MakeMobileconfig(clientName, issuerName, config: dict):
 
         s = s.replace("{CA_CERT_DATA}", output.decode(encoding="ascii"))
 
-    with open("apple/" + clientName + ".mobileconfig", "w", encoding="ascii") as f:
+    with open(outFileName, "w", encoding="ascii") as f:
         f.write(s)

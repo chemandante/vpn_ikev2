@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import sys
+from shutil import copy2
 from sys import argv
 
 from py.config_json import GetJSONConfig
@@ -59,30 +60,34 @@ privateKeyFileName = PRIVATE_DIR + clientName + ".pem"
 
 res = subprocess.run(["sh", "genclientcert.sh", clientName, serverName, serverAddr], check=True)
 
+# Preparing output folder
+if not os.path.isdir("clients"):
+    os.mkdir("clients")
+
+outDir = "clients/" + clientName
+if not os.path.isdir(outDir):
+    os.mkdir(outDir)
+outDir += '/'
+
 # Generating certs for Apple devices
 if "a" in command:
-    if not os.path.isdir("apple"):
-        os.mkdir("apple")
-
-    mobileConfig = "apple/" + clientName + ".mobileconfig"
+    mobileConfig = outDir + clientName + ".mobileconfig"
     issuerName = GetCASubjectCN()
 
-    MakeMobileconfig(clientName, issuerName if issuerName != "" else serverName, conf)
+    MakeMobileconfig(mobileConfig, clientName, issuerName if issuerName != "" else serverName, conf)
 
     print(f"'{mobileConfig}' was generated successfully")
 
 # Generating certs for Windows devices
 if "w" in command:
-    if not os.path.isdir("win"):
-        os.mkdir("win")
-    pfxName = "win/" + clientName + ".pfx"
+    pfxName = outDir + clientName + ".pfx"
     print("\nGenerating PFX certificate for Windows. Prepare to enter protection password.")
     res = subprocess.run(["openssl", "pkcs12", "-export",
                           "-in", certKeyFileName,
                           "-inkey", privateKeyFileName,
                           "-out", pfxName], check=True)
 
-    psScriptName = "win/" + clientName + ".ps1"
+    psScriptName = outDir + clientName + ".ps1"
 
     with open("template/powershell.template", "r", encoding="ascii") as f:
         vpnConnName = conf["serverName"].capitalize() + " IKEv2"
@@ -93,6 +98,8 @@ if "w" in command:
 
         with open(psScriptName, "w", encoding="ascii") as fw:
             fw.write(s)
+
+    copy2(CA_CERT_NAME, outDir)
 
     print(f"'{pfxName}' and '{psScriptName}' generated successfully")
 
