@@ -22,7 +22,13 @@
             <key>PayloadDisplayName</key>
             <string>{PROFILE_NAME}</string>
             <key>PayloadDescription</key>
-            <string>Configure VPN</string>
+            <string>VPN IKEv2 configuration</string>
+            <key>PayloadType</key>
+            <string>com.apple.vpn.managed</string>
+            <key>PayloadIdentifier</key>
+            <string>com.apple.vpn.managed.fox</string>
+            <key>PayloadUUID</key>
+            <string>{PAYLOAD_VPN_UUID}</string>
             <key>UserDefinedName</key>
             <string>{PROFILE_NAME}</string>
             <key>VPNType</key>
@@ -65,37 +71,7 @@
                 </dict>
                 <key>OnDemandEnabled</key>
                 <integer>0</integer>
-                <key>OnDemandRules</key>
-                <array>
-                    <dict>
-                        <key>InterfaceTypeMatch</key>
-                        <string>WiFi</string>
-                        <key>SSIDMatch</key>
-                        <array>
-                            <string>SSID1</string>
-                            <string>SSID2</string>
-                        </array>
-                        <key>Action</key>
-                        <string>Disconnect</string>
-                    </dict>
-                    <dict>
-                        <key>InterfaceTypeMatch</key>
-                        <string>Cellular</string>
-                        <key>Action</key>
-                        <string>Connect</string>
-                    </dict>
-                    <dict>
-                        <key>Action</key>
-                        <string>Connect</string>
-                    </dict>
-                </array>
             </dict>
-            <key>PayloadType</key>
-            <string>com.apple.vpn.managed</string>
-            <key>PayloadIdentifier</key>
-            <string>com.apple.vpn.managed.fox</string>
-            <key>PayloadUUID</key>
-            <string>{PAYLOAD_VPN_UUID}</string>
             <key>PayloadVersion</key>
             <integer>1</integer>
         </dict>
